@@ -10,14 +10,117 @@ This Django REST API uses PostgreSQL, JWT authentication, task attachments, thre
 
 ## 1. Create the PostgreSQL user and database
 
-Open **SQL Shell (psql)** as the PostgreSQL administrator, connect to the default `postgres` database, and run the following. Choose your own local password in place of `choose-a-strong-local-password`.
+### Recommended local-development values
+
+Every developer can create the same **application** database role and database on their own computer. They only need PostgreSQL installed and the password for the PostgreSQL administrator account created during installation (usually the `postgres` account).
+
+Use these values consistently in both PostgreSQL and `.env`:
+
+| Purpose | Value |
+| --- | --- |
+| PostgreSQL administrator (used only for setup) | `postgres` |
+| Application database name | `taskboard` |
+| Application database user | `taskboard_user` |
+| Application database password | `change-me` for local development only |
+| Database server | `127.0.0.1` |
+| Database port | `5432` |
+
+`postgres` and `taskboard_user` are different accounts. Do **not** put the PostgreSQL administrator password in `.env`; Django connects as `taskboard_user` after setup is complete.
+
+### Fast path: run the setup from PowerShell
+
+1. Install PostgreSQL and remember the password chosen for its administrator, usually `postgres`.
+2. Open **PowerShell**.
+3. Run this command. Change `17` if you installed another PostgreSQL version:
+
+   ```powershell
+   & 'C:\Program Files\PostgreSQL\17\bin\psql.exe' -U postgres -d postgres
+   ```
+
+4. When prompted, type the PostgreSQL **administrator** password from installation. You will then see `postgres=#`.
+5. Paste the following commands exactly:
+
+   ```sql
+   CREATE ROLE taskboard_user WITH LOGIN PASSWORD 'change-me';
+   CREATE DATABASE taskboard OWNER taskboard_user;
+   \q
+   ```
+
+6. In `python/.env`, use the matching values:
+
+   ```dotenv
+   POSTGRES_DB=taskboard
+   POSTGRES_USER=taskboard_user
+   POSTGRES_PASSWORD=change-me
+   POSTGRES_HOST=127.0.0.1
+   POSTGRES_PORT=5432
+   ```
+
+For shared, staging, or production databases, replace `change-me` with a strong unique password in both the SQL command and `.env`.
+
+### Open PostgreSQL's SQL Shell on Windows
+
+1. Press the **Windows** key.
+2. Search for **SQL Shell (psql)** and open it. It is installed with PostgreSQL.
+3. SQL Shell asks for connection details. Press **Enter** to accept the bracketed defaults for the first three prompts, then enter the PostgreSQL administrator username and password you chose while installing PostgreSQL:
+
+   ```text
+   Server [localhost]:                 Enter
+   Database [postgres]:                Enter
+   Port [5432]:                        Enter
+   Username [postgres]:                Enter, or type your administrator username
+   Password for user postgres:         type the administrator password, then Enter
+   ```
+
+   Nothing is shown while you type the password; that is normal. A successful connection ends at a prompt similar to `postgres=#`.
+
+4. At the `postgres=#` prompt, paste these SQL commands. Replace `choose-a-strong-local-password` with a password you will put in the backend `.env` file later. Keep the single quotes around the password.
 
 ```sql
 CREATE ROLE taskboard_user WITH LOGIN PASSWORD 'choose-a-strong-local-password';
 CREATE DATABASE taskboard OWNER taskboard_user;
 ```
 
-If either already exists, do not run the corresponding statement again. To use different names, use the same names in the environment file in the next step.
+5. Confirm the role and database were created:
+
+   ```sql
+   \du taskboard_user
+   \l taskboard
+   ```
+
+6. Exit SQL Shell with:
+
+   ```sql
+   \q
+   ```
+
+### If the user or database already exists
+
+Do not run the two `CREATE` statements again. First use `\du taskboard_user` and `\l taskboard` to check what exists.
+
+- If `taskboard_user` exists but you need to set its password again, run this while connected as the PostgreSQL administrator:
+
+  ```sql
+  ALTER ROLE taskboard_user WITH LOGIN PASSWORD 'your-new-local-password';
+  ```
+
+- If the role exists but `taskboard` does not, run:
+
+  ```sql
+  CREATE DATABASE taskboard OWNER taskboard_user;
+  ```
+
+- If both exist, continue to the next section; do not delete or recreate them.
+
+### Alternative: open SQL Shell from PowerShell
+
+If SQL Shell is not in the Start menu, open **PowerShell** and run the following command. Change `17` if you installed another PostgreSQL version. It will ask for the administrator password.
+
+```powershell
+& 'C:\Program Files\PostgreSQL\17\bin\psql.exe' -U postgres -d postgres
+```
+
+After the `postgres=#` prompt appears, use the same SQL commands above. To use different database or role names, update the corresponding `POSTGRES_DB` and `POSTGRES_USER` values in `.env` in the next step.
 
 ## 2. Configure the backend environment
 
@@ -34,7 +137,7 @@ Open `.env` and set these values to match PostgreSQL:
 DJANGO_DEBUG=True
 POSTGRES_DB=taskboard
 POSTGRES_USER=taskboard_user
-POSTGRES_PASSWORD=choose-a-strong-local-password
+POSTGRES_PASSWORD=change-me
 POSTGRES_HOST=127.0.0.1
 POSTGRES_PORT=5432
 CORS_ALLOWED_ORIGINS=http://localhost:5173
