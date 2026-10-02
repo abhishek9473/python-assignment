@@ -1,0 +1,15 @@
+# Environment files
+.env
+python/.env
+ui/.env
+
+# Python
+python/.venv/
+python/__pycache__/
+python/**/__pycache__/
+python/media/
+*.py[cod]
+
+# JavaScript
+ui/node_modules/
+ui/dist/
