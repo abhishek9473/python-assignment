@@ -43,8 +43,12 @@ Use these values consistently in both PostgreSQL and `.env`:
    ```sql
    CREATE ROLE taskboard_user WITH LOGIN PASSWORD 'change-me';
    CREATE DATABASE taskboard OWNER taskboard_user;
+   \du taskboard_user
+   \l taskboard
    \q
    ```
+
+   `\du taskboard_user` confirms the database user; `\l taskboard` confirms the database and its owner. Both commands should show a result before SQL Shell exits.
 
 6. In `python/.env`, use the matching values:
 
